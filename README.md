@@ -20,7 +20,7 @@
 - ctrl+E for code
 
 ## 🎥 Demonstration
-[Click here to watch the demo](./public/tiptapdemo.mp4)
+[Click here to watch the demo](https://vimeo.com/1089447173/e67cd9df3f)
 ## 🛠️ Local Setup
 
 ### 1. Clone the repo
