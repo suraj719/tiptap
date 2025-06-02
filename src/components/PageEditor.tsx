@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import { StarterKit } from "@tiptap/starter-kit";
@@ -60,7 +60,11 @@ export default function PageEditor() {
             role="presentation"
           />
           {showMenu && (
-            <CommandMenu setShowMenu={setShowMenu} menuCoords={menuCoords} />
+            <CommandMenu
+              setShowMenu={setShowMenu}
+              menuCoords={menuCoords}
+              editor={editor}
+            />
           )}
         </EditorContext.Provider>
       </div>
@@ -68,27 +72,101 @@ export default function PageEditor() {
   );
 }
 
-function CommandMenu({ setShowMenu, menuCoords }: any) {
-  return (
-    <>
-      <div
-        className={`absolute bg-gray-100 p-2 rounded shadow-md`}
-        style={{
-          top: menuCoords.top,
-          left: menuCoords.left,
-        }}
-      >
-        <HeadingButton onClick={() => setShowMenu(false)} level={1}>
+function CommandMenu({ setShowMenu, menuCoords, editor }: any) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const menuItems = [
+    {
+      label: "Heading1",
+      action: () => {
+        setShowMenu(false),
+          editor.chain().focus().toggleHeading({ level: 1 }).run();
+      },
+      component: (onClick: any) => (
+        <HeadingButton onClick={onClick} level={1}>
           Heading1
         </HeadingButton>
-        <HeadingButton onClick={() => setShowMenu(false)} level={2}>
+      ),
+    },
+    {
+      label: "Heading2",
+      action: () => {
+        setShowMenu(false),
+          editor.chain().focus().toggleHeading({ level: 2 }).run();
+      },
+      component: (onClick: any) => (
+        <HeadingButton onClick={onClick} level={2}>
           Heading2
         </HeadingButton>
-        <HeadingButton onClick={() => setShowMenu(false)} level={3}>
+      ),
+    },
+    {
+      label: "Heading3",
+      action: () => {
+        setShowMenu(false),
+          editor.chain().focus().toggleHeading({ level: 3 }).run();
+      },
+      component: (onClick: any) => (
+        <HeadingButton onClick={onClick} level={3}>
           Heading3
         </HeadingButton>
-        <ListButton type="bulletList">Bullet</ListButton>
-      </div>
-    </>
+      ),
+    },
+    {
+      label: "Bullet",
+      action: () => {
+        setShowMenu(false), editor.chain().focus().toggleBulletList().run();
+      },
+      component: () => <ListButton type="bulletList">Bullet</ListButton>,
+    },
+  ];
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!menuRef.current) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % menuItems.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex(
+          (prev) => (prev - 1 + menuItems.length) % menuItems.length
+        );
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        menuItems[selectedIndex].action();
+      } else if (e.key === "Escape") {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedIndex, menuItems, setShowMenu]);
+
+  return (
+    <div
+      ref={menuRef}
+      className="absolute bg-gray-100 p-2 rounded shadow-md"
+      style={{
+        top: menuCoords.top,
+        left: menuCoords.left,
+      }}
+    >
+      {menuItems.map((item, index) => (
+        <div
+          key={item.label}
+          className={`p-1 rounded cursor-pointer ${
+            index === selectedIndex ? "bg-blue-200" : ""
+          }`}
+          onMouseEnter={() => setSelectedIndex(index)}
+          onClick={item.action}
+        >
+          {item.component(() => setShowMenu(false))}
+        </div>
+      ))}
+    </div>
   );
 }
